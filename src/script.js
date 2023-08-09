@@ -50,25 +50,7 @@ function usuarioExistente(req, res, next) {
   // Se o usuario nao existe, pode prosseguir para a criaçao do novo usuário
   next();
 }
-// verifica se a senha e o email estao correto, se sim, primeiro define o usuarioLogadoId como NULL e depois define como o id do usuario que foi encontrado no usuariosData
-function usuarioLogado(req, res, next) {
-  const { email, senha } = req.body;
 
-  const usuario = Object.values(usuariosData).find(
-    (user) => user.email === email && user.senha === senha
-  );
-
-  if (!usuario) {
-    return res.status(400).json({ mensagem: "E-mail ou senha inválidos." });
-  }
-
-  // Faz logout do usuário anterior (se caso tiver algum logado)
-  usuarioLogadoId = null;
-
-  // Define o novo usuário como logado
-  usuarioLogadoId = usuario.id;
-  next();
-}
 // verifica se o recado pertence ao usuário logado
 function verificarRecadoDoUsuario(req, res, next) {
   const recadoId = parseInt(req.params.id);
@@ -105,6 +87,9 @@ function verificarRecadoExistente(req, res, next) {
 
 //     ROTAS
 
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
 //   Rota para criar um novo usuário
 app.post("/usuarios", usuarioExistente, (req, res) => {
   const { email, senha } = req.body;
@@ -123,8 +108,26 @@ app.post("/usuarios", usuarioExistente, (req, res) => {
     .json({ mensagem: "Usuário criado com sucesso.", usuario: novoUsuario });
 });
 // Rota para realizar o login
-app.post("/login", usuarioLogado, (req, res) => {
-  return res.status(200).json({ mensagem: "Login realizado com sucesso." });
+app.post("/login", (req, res) => {
+  const { email, senha } = req.body;
+
+  const usuario = Object.values(usuariosData).find(
+    (user) => user.email === email && user.senha === senha
+  );
+
+  if (!usuario) {
+    return res.status(400).json({ mensagem: "E-mail ou senha inválidos." });
+  }
+
+  // Faz logout do usuário anterior (se caso tiver algum logado)
+  usuarioLogadoId = null;
+
+  // Define o novo usuário como logado
+  usuarioLogadoId = usuario.id;
+  return res.status(200).json({
+    mensagem: "Login realizado com sucesso.",
+    usuario: usuario,
+  });
 });
 
 // CRUD
